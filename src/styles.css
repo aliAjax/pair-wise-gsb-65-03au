@@ -36,3 +36,8 @@ main { grid-column: 2; min-width: 0; position: relative; }
 .deviation-nav button > div { display: flex; gap: 8px; align-items: center; }.deviation-nav span, .deviation-nav small { color: #7d898c; font-size: 11px; }
 .deviation-main { background: white; border: 1px solid #d9e1e3; padding: 18px; }.two-column { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }.raw-points { background: #f4f8f8; padding: 14px; }.raw-points p { color: #6d7b7e; }.raw-points code { color: #174d60; line-height: 1.8; }
 .reset { position: fixed; right: 20px; bottom: 15px; }.empty { padding: 80px; text-align: center; color: #718085; }
+.scheduler-grid { display: grid; grid-template-columns: 1fr 1.15fr; gap: 14px; margin-bottom: 16px; }
+.scheduler-grid > div { background: white; border: 1px solid #dae2e4; padding: 14px 16px; }
+.scheduler-pick { background: white; border: 1px solid #dae2e4; }
+.scheduler-pick .ant-table { border: 0; }
+.cell-sub code, .tab-actions code { font-size: 11px; }

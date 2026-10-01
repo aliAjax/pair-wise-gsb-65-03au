@@ -3,10 +3,11 @@ import { Badge, Button } from 'antd'
 import { useShipmentStore } from './store/useShipmentStore'
 import { ShipmentList } from './views/ShipmentList'
 import { ShipmentDetail } from './views/ShipmentDetail'
+import { Scheduler } from './views/Scheduler'
 import { DeviationWorkbench } from './views/DeviationWorkbench'
 import { AuditTrail } from './views/AuditTrail'
 
-const nav = [['/', '运输放行'], ['/deviations', '偏差调查'], ['/audit', '证据审计']]
+const nav = [['/', '运输放行'], ['/scheduler', '货站排程'], ['/deviations', '偏差调查'], ['/audit', '证据审计']]
 
 function Shell() {
   const reset = useShipmentStore((state) => state.reset)
@@ -20,6 +21,7 @@ function Shell() {
     <main>
       <Routes>
         <Route path="/" element={<ShipmentList />} />
+        <Route path="/scheduler" element={<Scheduler />} />
         <Route path="/shipments/:id" element={<ShipmentDetail />} />
         <Route path="/deviations" element={<DeviationWorkbench />} />
         <Route path="/audit" element={<AuditTrail />} />

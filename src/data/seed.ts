@@ -1,4 +1,18 @@
-import type { AuditEntry, Deviation, Shipment } from '../types'
+import type { AuditEntry, Deviation, DryIceBatch, PrecoolStation, Shipment } from '../types'
+
+export const seedStations: PrecoolStation[] = [
+  { id: 'ST-COLD-A', name: '冷藏预冷位 A 组', zone: '冷藏', capacity: 2 },
+  { id: 'ST-COLD-B', name: '冷藏预冷位 B 组', zone: '冷藏', capacity: 1 },
+  { id: 'ST-CHILL', name: '控温预冷位 C 组', zone: '控温', capacity: 2 },
+  { id: 'ST-FROZEN', name: '深冷预冷位 D 组', zone: '深冷', capacity: 1 }
+]
+
+export const seedIceBatches: DryIceBatch[] = [
+  { id: 'ICE-260928-01', stationId: 'ST-COLD-A', totalKg: 120, receivedAt: '2026-09-28T18:00:00', note: '夜班补给批次' },
+  { id: 'ICE-260928-02', stationId: 'ST-COLD-B', totalKg: 60, receivedAt: '2026-09-28T18:10:00', note: '冷藏备用' },
+  { id: 'ICE-260928-03', stationId: 'ST-CHILL', totalKg: 90, receivedAt: '2026-09-28T18:20:00', note: '控温区批次' },
+  { id: 'ICE-260928-04', stationId: 'ST-FROZEN', totalKg: 140, receivedAt: '2026-09-28T18:30:00', note: '深冷高耗量批次' }
+]
 
 const series = (base: number, pattern: number[]): { id: string; time: string; value: number }[] => pattern.map((value, index) => ({
   id: `T-${index}`,
@@ -42,6 +56,74 @@ export const seedShipments: Shipment[] = [
       { role: '发货方', name: '苏晴', status: '已签', signedAt: '2026-09-29T08:10:00', comment: '样本封箱完成' },
       { role: '承运方', name: '全日空货运', status: '已签', signedAt: '2026-09-29T14:30:00', comment: '温度波动已报告' },
       { role: '收货方', name: '佐藤健', status: '待签', signedAt: '', comment: '' },
+      { role: '放行人员', name: '顾言', status: '待签', signedAt: '', comment: '' }
+    ]
+  },
+  {
+    id: 'AIR-261001-03', product: '冻存血浆制剂', batch: 'PLS-260930', route: '上海浦东 PVG → 卢森堡 LUX', containerId: 'RKN-77001',
+    tempMin: -30, tempMax: -15, plannedDeparture: '2026-10-01T08:00:00', actualArrival: '2026-10-01T08:00:00', status: '待装机', version: 2, updatedAt: '2026-09-30T16:20:00',
+    segments: [
+      { id: 'SEG-1', from: '上海血浆冷库', to: '浦东机场货站', flight: '陆运', plannedStart: '2026-09-30T22:00:00', actualStart: '', actualEnd: '', handler: '待派车', note: '深冷箱封条待核', temperature: [], flightHours: 1 },
+      { id: 'SEG-2', from: '浦东机场货站', to: 'LUX货站', flight: 'CV601', plannedStart: '2026-10-01T08:00:00', actualStart: '', actualEnd: '', handler: '卢森堡货运', note: '宽体机深冷舱位已确认', temperature: [], flightHours: 11 }
+    ],
+    evidence: [
+      { id: 'E-6', name: 'CV601深冷舱位确认.pdf', category: '设备报告', version: 1, uploadedBy: '卢森堡货运', uploadedAt: '2026-09-30T15:00:00', verified: false }
+    ],
+    signatures: [
+      { role: '发货方', name: '上海血浆库', status: '待签', signedAt: '', comment: '' },
+      { role: '承运方', name: '卢森堡货运', status: '待签', signedAt: '', comment: '' },
+      { role: '收货方', name: 'LUX Depot', status: '待签', signedAt: '', comment: '' },
+      { role: '放行人员', name: '顾言', status: '待签', signedAt: '', comment: '' }
+    ]
+  },
+  {
+    id: 'AIR-261001-04', product: '冻存干细胞制剂', batch: 'STEM-260930', route: '上海浦东 PVG → 安克雷奇 ANC', containerId: 'RKN-77002',
+    tempMin: -35, tempMax: -15, plannedDeparture: '2026-10-01T10:30:00', actualArrival: '2026-10-01T10:30:00', status: '待装机', version: 1, updatedAt: '2026-09-30T17:00:00',
+    segments: [
+      { id: 'SEG-1', from: '苏州细胞库', to: '浦东机场货站', flight: '陆运', plannedStart: '2026-10-01T01:00:00', actualStart: '', actualEnd: '', handler: '待派车', note: '全程深冷车厢', temperature: [], flightHours: 2 },
+      { id: 'SEG-2', from: '浦东机场货站', to: 'ANC货站', flight: '5Y829', plannedStart: '2026-10-01T10:30:00', actualStart: '', actualEnd: '', handler: '阿特拉斯航空', note: '与CV601早高峰争用深冷预冷位', temperature: [], flightHours: 12 }
+    ],
+    evidence: [
+      { id: 'E-7', name: '5Y829货机温控舱位图.pdf', category: '设备报告', version: 1, uploadedBy: '阿特拉斯航空', uploadedAt: '2026-09-30T16:40:00', verified: false }
+    ],
+    signatures: [
+      { role: '发货方', name: '苏州细胞库', status: '待签', signedAt: '', comment: '' },
+      { role: '承运方', name: '阿特拉斯航空', status: '待签', signedAt: '', comment: '' },
+      { role: '收货方', name: 'ANC Cell Bank', status: '待签', signedAt: '', comment: '' },
+      { role: '放行人员', name: '顾言', status: '待签', signedAt: '', comment: '' }
+    ]
+  },
+  {
+    id: 'AIR-261001-05', product: '胰岛素笔芯', batch: 'INS-260930', route: '上海浦东 PVG → 法兰克福 FRA', containerId: 'RKN-44018',
+    tempMin: 2, tempMax: 8, plannedDeparture: '2026-10-01T13:30:00', actualArrival: '2026-10-01T13:30:00', status: '待装机', version: 1, updatedAt: '2026-09-30T17:30:00',
+    segments: [
+      { id: 'SEG-1', from: '苏州制药厂', to: '浦东机场货站', flight: '陆运', plannedStart: '2026-10-01T06:30:00', actualStart: '', actualEnd: '', handler: '待派车', note: '冷藏车4℃', temperature: [], flightHours: 2 },
+      { id: 'SEG-2', from: '浦东机场货站', to: 'FRA货站', flight: 'CA933', plannedStart: '2026-10-01T13:30:00', actualStart: '', actualEnd: '', handler: '国航货运', note: '复用RKN-44018，注意与MU553排程冲突', temperature: [], flightHours: 12 }
+    ],
+    evidence: [
+      { id: 'E-8', name: 'CA933冷藏舱位确认.pdf', category: '设备报告', version: 1, uploadedBy: '国航货运', uploadedAt: '2026-09-30T17:10:00', verified: false }
+    ],
+    signatures: [
+      { role: '发货方', name: '苏州制药', status: '待签', signedAt: '', comment: '' },
+      { role: '承运方', name: '国航货运', status: '待签', signedAt: '', comment: '' },
+      { role: '收货方', name: 'FRA Pharma', status: '待签', signedAt: '', comment: '' },
+      { role: '放行人员', name: '顾言', status: '待签', signedAt: '', comment: '' }
+    ]
+  },
+  {
+    id: 'AIR-261001-06', product: '重组人生长激素', batch: 'GH-260930', route: '上海浦东 PVG → 巴黎 CDG', containerId: 'RKN-44018',
+    tempMin: 2, tempMax: 8, plannedDeparture: '2026-10-01T12:00:00', actualArrival: '2026-10-01T12:00:00', status: '待装机', version: 1, updatedAt: '2026-09-30T17:35:00',
+    segments: [
+      { id: 'SEG-1', from: '上海生物制品所', to: '浦东机场货站', flight: '陆运', plannedStart: '2026-10-01T05:00:00', actualStart: '', actualEnd: '', handler: '待派车', note: '与CA933同箱不同航段', temperature: [], flightHours: 2 },
+      { id: 'SEG-2', from: '浦东机场货站', to: 'CDG货站', flight: 'MU553', plannedStart: '2026-10-01T12:00:00', actualStart: '', actualEnd: '', handler: '东航货运', note: 'RKN-44018连续执行，预冷窗口与CA933重叠', temperature: [], flightHours: 11 }
+    ],
+    evidence: [
+      { id: 'E-9', name: 'MU553装机预冷单.pdf', category: '设备报告', version: 1, uploadedBy: '东航货运', uploadedAt: '2026-09-30T17:20:00', verified: false }
+    ],
+    signatures: [
+      { role: '发货方', name: '上海生物所', status: '待签', signedAt: '', comment: '' },
+      { role: '承运方', name: '东航货运', status: '待签', signedAt: '', comment: '' },
+      { role: '收货方', name: 'CDG Pharma', status: '待签', signedAt: '', comment: '' },
       { role: '放行人员', name: '顾言', status: '待签', signedAt: '', comment: '' }
     ]
   }
