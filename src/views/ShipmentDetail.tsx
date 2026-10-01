@@ -4,7 +4,8 @@ import { Alert, Badge, Button, Card, DatePicker, Descriptions, Divider, Form, In
 import { UploadOutlined } from '@ant-design/icons'
 import { TemperatureChart } from '../components/TemperatureChart'
 import { useShipmentStore } from '../store/useShipmentStore'
-import type { EvidenceFile, ShipmentSegment } from '../types'
+import { TEMP_ZONES, statusColor as reservationStatusColor } from '../services/schedulingEngine'
+import type { EvidenceFile, Reservation, ShipmentSegment } from '../types'
 
 export function ShipmentDetail() {
   const { id } = useParams()
@@ -18,6 +19,36 @@ export function ShipmentDetail() {
   const activeSegment = shipment.segments.find((item) => item.id === activeSegmentId) ?? shipment.segments[0]
   const deviations = state.deviations.filter((item) => item.shipmentId === shipment.id)
   const openDeviations = deviations.filter((item) => item.status !== '已关闭')
+  const reservations = state.reservations
+    .filter((item) => item.shipmentId === shipment.id)
+    .sort((a, b) => (a.segmentId.localeCompare(b.segmentId)))
+  const reservationColumns = [
+    { title: '航段', dataIndex: 'segmentId', width: 70 },
+    { title: '温区', dataIndex: 'zone', width: 115, render: (value: Reservation['zone']) => TEMP_ZONES[value].label },
+    { title: '货站', dataIndex: 'station', width: 110 },
+    {
+      title: '预冷位 / 时间窗', render: (_: unknown, row: Reservation) => row.status === '排队中'
+        ? <Tag color="warning">等待位次释放</Tag>
+        : <div><strong>{row.slotId}</strong><small className="cell-sub">{row.preCoolStart.replace('T', ' ').slice(5, 16)} ~ {row.preCoolEnd.replace('T', ' ').slice(5, 16)}</small></div>
+    },
+    {
+      title: '干冰冻结', render: (_: unknown, row: Reservation) => <div>
+        <strong>需求 {row.iceRequiredKg}kg</strong>
+        <small className="cell-sub">{row.allocations.map((item) => `${item.batchId} ${item.kg}kg`).join('、') || '未冻结'}</small>
+      </div>
+    },
+    { title: '状态', dataIndex: 'status', width: 85, render: (value: Reservation['status']) => <Tag color={reservationStatusColor(value)}>{value}</Tag> },
+    {
+      title: '阻断 / 缺口', width: 230,
+      render: (_: unknown, row: Reservation) => row.status !== '排队中'
+        ? <span className="cell-sub">{row.status === '已补给' ? `已实装 ${row.suppliedKg}kg（${row.suppliedAt.replace('T', ' ').slice(5, 16)}）` : '占用锁定中'}</span>
+        : <Space direction="vertical" size={2}>
+          <Tag color="volcano">{row.blockReason}</Tag>
+          {row.slotGap > 0 && <small>冷位缺口 {Math.round(row.slotGap)} 分钟</small>}
+          {row.iceGapKg > 0 && <small>干冰缺口 {row.iceGapKg}kg</small>}
+        </Space>
+    }
+  ]
   const evidenceColumns = [
     { title: '文件', dataIndex: 'name', render: (value: string, row: EvidenceFile) => <div><strong>{value}</strong><small className="cell-sub">{row.category} · V{row.version}</small></div> },
     { title: '上传', render: (_: unknown, row: EvidenceFile) => `${row.uploadedBy} ${row.uploadedAt.replace('T', ' ').slice(0, 16)}` },
@@ -70,7 +101,26 @@ export function ShipmentDetail() {
     <Tabs className="detail-tabs" items={[
       { key: 'evidence', label: `证据版本 (${shipment.evidence.length})`, children: <div><div className="tab-actions"><Upload beforeUpload={() => { state.addEvidence(shipment.id, { name: `现场补充材料-${Date.now()}.pdf`, category: '包装确认', uploadedBy: '当前用户', verified: false }); message.success('已新增证据版本'); return false }} showUploadList={false}><Button icon={<UploadOutlined />}>上传证据</Button></Upload><span>同分类文件自动递增版本</span></div><Table rowKey="id" size="small" columns={evidenceColumns} dataSource={shipment.evidence} pagination={false} /></div> },
       { key: 'signatures', label: `签收记录 (${shipment.signatures.filter((item) => item.status === '已签').length}/${shipment.signatures.length})`, children: <div className="signature-grid">{shipment.signatures.map((item) => <Card key={item.role} size="small"><div className="signature-head"><strong>{item.role}</strong><Tag color={item.status === '已签' ? 'success' : item.status === '已退回' ? 'error' : 'default'}>{item.status}</Tag></div><p>{item.name}</p><small>{item.signedAt ? item.signedAt.replace('T', ' ').slice(0, 16) : '尚未签署'}</small><Divider /><span>{item.comment || '暂无意见'}</span></Card>)}</div> },
-      { key: 'deviations', label: `偏差 (${deviations.length})`, children: <Table rowKey="id" size="small" pagination={false} dataSource={deviations} columns={[{ title: '编号', dataIndex: 'id' }, { title: '标题', dataIndex: 'title' }, { title: '状态', dataIndex: 'status' }, { title: '版本', dataIndex: 'version', render: (value: number) => `V${value}` }]} /> }
+      { key: 'deviations', label: `偏差 (${deviations.length})`, children: <Table rowKey="id" size="small" pagination={false} dataSource={deviations} columns={[{ title: '编号', dataIndex: 'id' }, { title: '标题', dataIndex: 'title' }, { title: '状态', dataIndex: 'status' }, { title: '版本', dataIndex: 'version', render: (value: number) => `V${value}` }]} /> },
+      {
+        key: 'scheduling', label: `冷链准备 (${reservations.length})`,
+        children: <div>
+          <div className="tab-actions">
+            <Space>
+              <Button type="primary" onClick={() => {
+                const result = state.submitReservation(shipment.id, '值班员 高岚')
+                result.ok ? message.success(result.message) : message.warning(result.message)
+              }}>提交 / 重放排程</Button>
+              <Button onClick={() => {
+                const result = state.receiveEquipmentReport(shipment.id, '设备值班员 沈牧', 600)
+                result.ok ? message.success(result.message) : message.warning(result.message)
+              }}>模拟设备报告更新（延误10h）</Button>
+            </Space>
+            <span>同一占用与余量：位次按温区+货站+时间窗互斥，干冰按批次冻结；报告更新后未开始安排失效重算，已完成保留原批次耗量</span>
+          </div>
+          <Table<Reservation> rowKey="id" size="small" pagination={false} dataSource={reservations} columns={reservationColumns} />
+        </div>
+      }
     ]} />
     <Modal title="多角色签收" open={signOpen} onCancel={() => setSignOpen(false)} onOk={sign} okText="提交签收">
       <Form form={form} layout="vertical" initialValues={{ role: '放行人员', decision: '已签' }}>

@@ -36,3 +36,14 @@ main { grid-column: 2; min-width: 0; position: relative; }
 .deviation-nav button > div { display: flex; gap: 8px; align-items: center; }.deviation-nav span, .deviation-nav small { color: #7d898c; font-size: 11px; }
 .deviation-main { background: white; border: 1px solid #d9e1e3; padding: 18px; }.two-column { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }.raw-points { background: #f4f8f8; padding: 14px; }.raw-points p { color: #6d7b7e; }.raw-points code { color: #174d60; line-height: 1.8; }
 .reset { position: fixed; right: 20px; bottom: 15px; }.empty { padding: 80px; text-align: center; color: #718085; }
+.resource-grid { display: grid; grid-template-columns: minmax(480px, 1.1fr) minmax(420px, 1fr); gap: 14px; margin-top: 14px; }
+.slot-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.slot-card { border: 1px solid #dde4e6; padding: 10px; background: #fafcfc; }
+.slot-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.slot-card small { color: #7d898c; }
+.slot-lanes { margin-top: 8px; display: grid; gap: 6px; min-height: 26px; }
+.slot-lanes > div { border-left: 3px solid #176b75; background: #eaf4f3; padding: 4px 8px; font-size: 11px; color: #174d60; }
+.slot-lanes > div span { display: block; color: #657579; font-size: 10px; }
+.slot-lanes > div.done { border-left-color: #52a55a; background: #eef8ef; }
+.batch-row { padding: 9px 0; border-bottom: 1px dashed #dde4e6; }.batch-row:last-child { border-bottom: 0; }
+.batch-row .ant-descriptions { margin-bottom: 4px; }

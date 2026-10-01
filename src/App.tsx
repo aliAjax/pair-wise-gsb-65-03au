@@ -5,8 +5,9 @@ import { ShipmentList } from './views/ShipmentList'
 import { ShipmentDetail } from './views/ShipmentDetail'
 import { DeviationWorkbench } from './views/DeviationWorkbench'
 import { AuditTrail } from './views/AuditTrail'
+import { SchedulingWorkbench } from './views/SchedulingWorkbench'
 
-const nav = [['/', '运输放行'], ['/deviations', '偏差调查'], ['/audit', '证据审计']]
+const nav = [['/', '运输放行'], ['/scheduling', '预冷与干冰排程'], ['/deviations', '偏差调查'], ['/audit', '证据审计']]
 
 function Shell() {
   const reset = useShipmentStore((state) => state.reset)
@@ -21,6 +22,7 @@ function Shell() {
       <Routes>
         <Route path="/" element={<ShipmentList />} />
         <Route path="/shipments/:id" element={<ShipmentDetail />} />
+        <Route path="/scheduling" element={<SchedulingWorkbench />} />
         <Route path="/deviations" element={<DeviationWorkbench />} />
         <Route path="/audit" element={<AuditTrail />} />
         <Route path="*" element={<Navigate to="/" replace />} />

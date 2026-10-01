@@ -77,6 +77,90 @@ export interface Deviation {
   version: number
 }
 
+// ===== 货站预冷位 / 干冰补给排程域 =====
+
+/** 温区由航段温控范围推导，决定预冷位池与干冰消耗速率 */
+export type TempZoneId = 'Z2-8' | 'Z2-25' | 'Z15-25'
+
+export interface TempZone {
+  id: TempZoneId
+  label: string
+  /** 每小时干冰基础耗量（kg/h），按温区保温难度给出 */
+  iceRatePerHour: number
+  /** 装机前标准预冷时长（小时） */
+  preCoolHours: number
+}
+
+/** 预冷位：同一温区、同一货站、同一时间窗内不可被两只温控箱重复占用 */
+export interface PreCoolSlot {
+  id: string
+  station: string
+  zone: TempZoneId
+  capacity: number
+}
+
+/** 干冰批次：余量 = 到货 - 已冻结 - 已耗用量 */
+export interface DryIceBatch {
+  id: string
+  receivedAt: string
+  receivedKg: number
+  /** 已完成补给实际耗用，历史记录永久保留 */
+  consumedKg: number
+  note: string
+}
+
+/** 某票货对某干冰批次的冻结量 */
+export interface IceAllocation {
+  batchId: string
+  kg: number
+}
+
+export type ReservationStatus = '已排程' | '排队中' | '已预冷' | '已补给' | '已失效'
+export type BlockReason = '预冷位容量不足' | '干冰余量不足' | '预冷位与干冰均不足'
+
+export interface Reservation {
+  id: string
+  shipmentId: string
+  segmentId: string
+  containerId: string
+  station: string
+  zone: TempZoneId
+  preCoolStart: string
+  preCoolEnd: string
+  slotId: string
+  slotGap: number
+  iceRequiredKg: number
+  iceGapKg: number
+  allocations: IceAllocation[]
+  status: ReservationStatus
+  blockReason: BlockReason | ''
+  /** 已冻结的总干冰量（排程时锁定） */
+  frozenKg: number
+  /** 已补给后实际装入量（完成后批次记录不可变） */
+  suppliedKg: number
+  suppliedAt: string
+  /** 驱动本次排程的设备报告版本；报告更新后未开始的安排据此失效 */
+  reportVersion: number
+  /** 幂等键：同一任务+航段+报告版本+操作者重复提交不重复扣减 */
+  idempotencyKey: string
+  /** 排队序号，容量释放后按 FIFO 补位 */
+  queuedAt: string
+  createdAt: string
+  updatedAt: string
+  lastError: string
+}
+
+/** 待写入暂存：模拟写入失败后从最后完整排程重试 */
+export interface PendingWrite {
+  action: string
+  shipmentId: string
+  reservationId: string
+  operator: string
+  idempotencyKey: string
+  payload?: { suppliedKg?: number; reportVersion?: number }
+  createdAt: string
+}
+
 export interface AuditEntry {
   id: string
   shipmentId: string
@@ -84,4 +168,6 @@ export interface AuditEntry {
   operator: string
   detail: string
   createdAt: string
+  category?: '证据' | '签收' | '偏差' | '放行' | '排程'
+  reservationId?: string
 }
